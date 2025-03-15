@@ -12,7 +12,7 @@ import {
   MenuList,
   MenuItem,
 } from "@material-tailwind/react";
-import Profile from './Profile'
+import Profile from "./Profile";
 import {
   ChevronDownIcon,
   Bars3Icon,
@@ -29,7 +29,8 @@ import {
   TagIcon,
   UserGroupIcon,
 } from "@heroicons/react/24/solid";
- 
+import { useAuthStore } from "../store/store";
+
 const navListMenuItems = [
   {
     title: "Products",
@@ -77,7 +78,7 @@ const navListMenuItems = [
     icon: TagIcon,
   },
 ];
- 
+
 function NavListMenu() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -96,22 +97,20 @@ function NavListMenu() {
             <Typography
               variant="h6"
               color="blue-gray"
-              className="flex items-center text-sm font-bold"
-            >
+              className="flex items-center text-sm font-bold">
               {title}
             </Typography>
             <Typography
               variant="paragraph"
-              className="text-xs !font-medium text-blue-gray-500"
-            >
+              className="text-xs !font-medium text-blue-gray-500">
               {description}
             </Typography>
           </div>
         </MenuItem>
       </a>
-    ),
+    )
   );
- 
+
   return (
     <React.Fragment>
       <Menu
@@ -119,15 +118,13 @@ function NavListMenu() {
         handler={setIsMenuOpen}
         offset={{ mainAxis: 20 }}
         placement="bottom"
-        allowHover={true}
-      >
+        allowHover={true}>
         <MenuHandler>
           <Typography as="div" variant="small" className="font-medium">
             <ListItem
               className="flex items-center gap-2 py-2 pr-4 font-medium text-gray-900"
               selected={isMenuOpen || isMobileMenuOpen}
-              onClick={() => setIsMobileMenuOpen((cur) => !cur)}
-            >
+              onClick={() => setIsMobileMenuOpen((cur) => !cur)}>
               Resources
               <ChevronDownIcon
                 strokeWidth={2.5}
@@ -156,7 +153,7 @@ function NavListMenu() {
     </React.Fragment>
   );
 }
- 
+
 function NavList() {
   return (
     <List className="mt-4 mb-6 p-0 lg:mt-0 lg:mb-0 lg:flex-row lg:p-1">
@@ -165,8 +162,7 @@ function NavList() {
         href="#"
         variant="small"
         color="blue-gray"
-        className="font-medium"
-      >
+        className="font-medium">
         <ListItem className="flex items-center gap-2 py-2 pr-4">Home</ListItem>
       </Typography>
       <NavListMenu />
@@ -175,8 +171,7 @@ function NavList() {
         href="#"
         variant="small"
         color="blue-gray"
-        className="font-medium"
-      >
+        className="font-medium">
         <ListItem className="flex items-center gap-2 py-2 pr-4">
           Contact Us
         </ListItem>
@@ -184,17 +179,32 @@ function NavList() {
     </List>
   );
 }
- 
+
+import { useLocation } from "react-router-dom";
+
 export default function NavbarWithMegaMenu() {
+  const location = useLocation();
   const [openNav, setOpenNav] = React.useState(false);
- 
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const logout = useAuthStore((state) => state.logout);
+
   React.useEffect(() => {
-    window.addEventListener(
-      "resize",
-      () => window.innerWidth >= 960 && setOpenNav(false),
-    );
+    const handleResize = () => {
+      if (window.innerWidth >= 960) {
+        setOpenNav(false);
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
- 
+
+  // Hide navbar for specific routes
+  const hiddenRoutes = ["/", "/login", "/signin"];
+  if (hiddenRoutes.includes(location.pathname)) {
+    return null;
+  }
+
   return (
     <Navbar className="mx-auto max-w-screen-xl px-4 py-2 fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-sm border-0">
       <div className="flex items-center justify-between text-blue-gray-900">
@@ -202,22 +212,20 @@ export default function NavbarWithMegaMenu() {
           as="a"
           href="#"
           variant="h6"
-          className="mr-4 cursor-pointer py-1.5 lg:ml-2"
-        >
+          className="mr-4 cursor-pointer py-1.5 lg:ml-2">
           Material Tailwind
         </Typography>
         <div className="hidden lg:block">
           <NavList />
         </div>
         <div className="hidden gap-2 lg:flex">
-          <Profile/>
+          <Profile />
         </div>
         <IconButton
           variant="text"
           color="blue-gray"
           className="lg:hidden"
-          onClick={() => setOpenNav(!openNav)}
-        >
+          onClick={() => setOpenNav(!openNav)}>
           {openNav ? (
             <XMarkIcon className="h-6 w-6" strokeWidth={2} />
           ) : (
@@ -228,12 +236,25 @@ export default function NavbarWithMegaMenu() {
       <Collapse open={openNav}>
         <NavList />
         <div className="flex w-full flex-nowrap items-center gap-2 lg:hidden">
-          <Button variant="outlined" size="sm" color="blue-gray" fullWidth>
-            Log In
-          </Button>
-          <Button variant="gradient" size="sm" fullWidth>
-            Sign In
-          </Button>
+          {isAuthenticated ? (
+            <Button
+              variant="outlined"
+              size="sm"
+              color="red"
+              fullWidth
+              onClick={logout}>
+              Logout
+            </Button>
+          ) : (
+            <>
+              <Button variant="outlined" size="sm" color="blue-gray" fullWidth>
+                Log In
+              </Button>
+              <Button variant="gradient" size="sm" fullWidth>
+                Sign Up
+              </Button>
+            </>
+          )}
         </div>
       </Collapse>
     </Navbar>
